@@ -4,7 +4,7 @@ const roomSchema = new Schema(
   {
     roomNumber: { 
       type: String, 
-      required: [true, "El número de habitación es obligatorio"], 
+      required: [true, "Room number is required"], 
       unique: true
     },
     type: { 
@@ -14,7 +14,7 @@ const roomSchema = new Schema(
     },
     pricePerNight: { 
       type: Number, 
-      required: [true, "El precio por noche es obligatorio"] 
+      required: [true, "Price per night is required"] 
     },
     description: {
       type: String
