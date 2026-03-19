@@ -3,7 +3,7 @@ const { Schema, model } = require("mongoose");
 const bookingSchema = new Schema(
   {
     room: { type: Schema.Types.ObjectId, ref: "Room", required: true },
-    guestName: { type: String, required: true },
+    guest: { type: Schema.Types.ObjectId, ref: "Guest", required: true },
     checkIn: { type: Date, required: true },
     checkOut: { type: Date, required: true },
     numberOfGuests: { type: Number, default: 1 },

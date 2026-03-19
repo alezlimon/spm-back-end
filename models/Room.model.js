@@ -19,13 +19,9 @@ const roomSchema = new Schema(
     description: {
       type: String
     },
-    isClean: { 
-      type: Boolean, 
-      default: true 
-    },
     status: { 
       type: String, 
-      enum: ["Available", "Occupied", "Maintenance"], 
+      enum: ["Available", "Occupied", "Dirty", "Maintenance"], 
       default: "Available" 
     }
   },

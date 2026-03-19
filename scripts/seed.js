@@ -18,15 +18,19 @@ async function seed() {
     await Room.deleteMany();
     await User.deleteMany();
 
-    // Seed Rooms
-    const rooms = await Room.insertMany([
-      { roomNumber: "101", type: "Single", pricePerNight: 80, status: "Available" },
-      { roomNumber: "102", type: "Double", pricePerNight: 120, status: "Available" },
-      { roomNumber: "201", type: "Suite", pricePerNight: 200, status: "Available" },
-      { roomNumber: "301", type: "Dorm", pricePerNight: 50, status: "Available" },
-      { roomNumber: "401", type: "Double", pricePerNight: 110, status: "Maintenance" }
-    ]);
-    console.log("Rooms seeded");
+
+    // Seed 333 Rooms with random expensive data
+    const types = ["Single", "Double", "Suite", "Dorm"];
+    const statuses = ["Available", "Occupied", "Maintenance"];
+    const roomsData = Array.from({ length: 333 }, (_, i) => {
+      const roomNumber = (100 + i + 1).toString();
+      const type = types[Math.floor(Math.random() * types.length)];
+      const pricePerNight = Math.floor(Math.random() * 9000) + 1000; // Entre 1000 y 9999
+      const status = statuses[Math.floor(Math.random() * statuses.length)];
+      return { roomNumber, type, pricePerNight, status };
+    });
+    const rooms = await Room.insertMany(roomsData);
+    console.log("333 random expensive rooms seeded");
 
     // Seed Users
     const salt = bcrypt.genSaltSync(10);
