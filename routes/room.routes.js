@@ -54,4 +54,17 @@ router.delete("/:id", (req, res, next) => {
     .catch((err) => next(err));
 });
 
+
+const Booking = require("../models/Booking.model");
+// GET /api/rooms/:id/bookings - Historial de reservas de una habitación
+router.get("/:id/bookings", async (req, res, next) => {
+  try {
+    const bookings = await Booking.find({ room: req.params.id })
+      .populate("guest");
+    res.json(bookings);
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;

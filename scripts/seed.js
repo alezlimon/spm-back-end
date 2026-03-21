@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const Room = require("../models/Room.model");
 const User = require("../models/User.model");
 const Booking = require("../models/Booking.model");
+const Guest = require("../models/Guest.model");
 
 const MONGO_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/spm";
 
@@ -17,20 +18,25 @@ async function seed() {
     await Booking.deleteMany();
     await Room.deleteMany();
     await User.deleteMany();
+    await Guest.deleteMany();
 
 
-    // Seed 333 Rooms with random expensive data
+    // Seed 333 Rooms, pero solo una parte estarán ocupadas y tendrán booking y huésped
     const types = ["Single", "Double", "Suite", "Dorm"];
-    const statuses = ["Available", "Occupied", "Maintenance"];
-    const roomsData = Array.from({ length: 333 }, (_, i) => {
+    const totalRooms = 333;
+    const occupiedCount = 100; // Por ejemplo, 100 habitaciones ocupadas
+    const availableCount = totalRooms - occupiedCount;
+    const roomsData = [];
+    for (let i = 0; i < totalRooms; i++) {
       const roomNumber = (100 + i + 1).toString();
       const type = types[Math.floor(Math.random() * types.length)];
-      const pricePerNight = Math.floor(Math.random() * 9000) + 1000; // Entre 1000 y 9999
-      const status = statuses[Math.floor(Math.random() * statuses.length)];
-      return { roomNumber, type, pricePerNight, status };
-    });
+      const pricePerNight = Math.floor(Math.random() * 9000) + 1000;
+      let status = "Available";
+      if (i < occupiedCount) status = "Occupied";
+      roomsData.push({ roomNumber, type, pricePerNight, status });
+    }
     const rooms = await Room.insertMany(roomsData);
-    console.log("333 random expensive rooms seeded");
+    console.log(`${totalRooms} rooms seeded (${occupiedCount} occupied)`);
 
     // Seed Users
     const salt = bcrypt.genSaltSync(10);
@@ -41,17 +47,37 @@ async function seed() {
     ]);
     console.log("Users seeded");
 
-    // Seed Bookings (optional)
-    await Booking.create({
-      room: rooms[0]._id,
-      guestName: "John Doe",
-      checkIn: new Date("2026-03-20"),
-      checkOut: new Date("2026-03-22"),
-      numberOfGuests: 1,
-      totalPrice: 160,
-      status: "Confirmed"
-    });
-    console.log("Bookings seeded");
+
+
+    // Seed Guests y Bookings para habitaciones ocupadas
+    const guestData = [];
+    const bookingData = [];
+    for (let i = 0; i < occupiedCount; i++) {
+      guestData.push({
+        firstName: `Guest${i+1}`,
+        lastName: `Test${i+1}`,
+        email: `guest${i+1}@example.com`,
+        phone: `6000000${i+1}`,
+        document: `DOC${1000+i+1}`,
+        nationality: "Testland",
+        notes: i % 2 === 0 ? "VIP" : "",
+        birthDate: new Date(1990, 0, 1 + (i % 28))
+      });
+    }
+    const guests = await Guest.insertMany(guestData);
+    for (let i = 0; i < occupiedCount; i++) {
+      bookingData.push({
+        room: rooms[i]._id,
+        guest: guests[i]._id,
+        checkIn: new Date("2026-03-20"),
+        checkOut: new Date("2026-03-22"),
+        numberOfGuests: 1,
+        totalPrice: 100 + i,
+        status: "Confirmed"
+      });
+    }
+    await Booking.insertMany(bookingData);
+    console.log(`${occupiedCount} guests and bookings seeded (1:1 with occupied rooms)`);
 
     await mongoose.disconnect();
     console.log("Seeding complete. DB connection closed.");
