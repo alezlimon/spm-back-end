@@ -9,6 +9,7 @@ const guestSchema = new Schema(
     document: { type: String, required: true, unique: true }, // Pasaporte/DNI
     nationality: { type: String },
     notes: { type: String }
+    ,birthDate: { type: Date, required: true }
   },
   { timestamps: true }
 );

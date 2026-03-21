@@ -4,7 +4,11 @@ const Guest = require("../models/Guest.model");
 // POST / - Crear un nuevo huésped
 router.post("/", async (req, res, next) => {
   try {
-    const guest = await Guest.create(req.body);
+    const { birthDate, ...rest } = req.body;
+    if (!birthDate || isNaN(Date.parse(birthDate))) {
+      return res.status(400).json({ message: "El campo birthDate es obligatorio y debe ser una fecha válida (YYYY-MM-DD)" });
+    }
+    const guest = await Guest.create({ ...rest, birthDate });
     res.status(201).json(guest);
   } catch (error) {
     next(error);
@@ -41,7 +45,15 @@ router.get("/search", async (req, res, next) => {
 // PUT /:id - Editar datos de un huésped
 router.put("/:id", async (req, res, next) => {
   try {
-    const updatedGuest = await Guest.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const { birthDate, ...rest } = req.body;
+    if (!birthDate || isNaN(Date.parse(birthDate))) {
+      return res.status(400).json({ message: "El campo birthDate es obligatorio y debe ser una fecha válida (YYYY-MM-DD)" });
+    }
+    const updatedGuest = await Guest.findByIdAndUpdate(
+      req.params.id,
+      { ...rest, birthDate },
+      { new: true }
+    );
     res.json(updatedGuest);
   } catch (error) {
     next(error);
