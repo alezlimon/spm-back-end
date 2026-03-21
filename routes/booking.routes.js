@@ -17,7 +17,7 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-// Obtener todas las reservas (opcional, útil para Lu)
+// Obtener todas las reservas 
 router.get("/", async (req, res, next) => {
   try {
     const bookings = await Booking.find().populate("room");
@@ -28,3 +28,22 @@ router.get("/", async (req, res, next) => {
 });
 
 module.exports = router;
+
+// Asociar un huésped existente a una reserva existente
+router.put('/:bookingId/assign-guest', async (req, res, next) => {
+  const { bookingId } = req.params;
+  const { guestId } = req.body;
+  try {
+    const updatedBooking = await Booking.findByIdAndUpdate(
+      bookingId,
+      { guest: guestId },
+      { new: true }
+    ).populate('guest');
+    if (!updatedBooking) {
+      return res.status(404).json({ message: 'Reserva no encontrada' });
+    }
+    res.json(updatedBooking);
+  } catch (error) {
+    next(error);
+  }
+});
