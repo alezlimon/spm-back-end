@@ -23,6 +23,11 @@ const roomSchema = new Schema(
       type: String, 
       enum: ["Available", "Occupied", "Dirty", "Maintenance"], 
       default: "Available" 
+    },
+    property: {
+      type: Schema.Types.ObjectId,
+      ref: "Property",
+      required: [true, "Property is required"]
     }
   },
   {
