@@ -27,6 +27,9 @@ app.use("/api/guests", guestRoutes);
 const roomRoutes = require("./routes/room.routes");
 app.use("/api/rooms", roomRoutes);
 
+const propertyRoutes = require("./routes/property.routes");
+app.use("/api/properties", propertyRoutes);
+
 // ❗ To handle errors. Routes that don't exist or errors that you handle in specific routes
 require("./error-handling")(app);
 

@@ -2,32 +2,35 @@ const { Schema, model } = require("mongoose");
 
 const roomSchema = new Schema(
   {
-    roomNumber: { 
-      type: String, 
-      required: [true, "Room number is required"], 
-      unique: true
+    property: {
+      type: Schema.Types.ObjectId,
+      ref: "Property",
+      required: [true, "Property is required"],
     },
-    type: { 
-      type: String, 
-      enum: ["Single", "Double", "Suite", "Dorm"],
-      default: "Double" 
+    roomNumber: {
+      type: String,
+      required: [true, "Room number is required"],
     },
-    pricePerNight: { 
-      type: Number, 
-      required: [true, "Price per night is required"] 
+    type: {
+      type: String,
+      enum: ["Single", "Double", "Suite", "Dorm", "Deluxe", "Familiar", "Twins"],
+      default: "Double",
     },
-    description: {
-      type: String
+    pricePerNight: {
+      type: Number,
+      required: [true, "Price per night is required"],
     },
-    status: { 
-      type: String, 
-      enum: ["Available", "Occupied", "Dirty", "Maintenance"], 
-      default: "Available" 
-    }
+    description: { type: String },
+    status: {
+      type: String,
+      enum: ["Available", "Occupied", "Dirty", "Maintenance"],
+      default: "Available",
+    },
   },
-  {
-    timestamps: true
-  }
+  { timestamps: true }
 );
+
+// Unique room number per property
+roomSchema.index({ property: 1, roomNumber: 1 }, { unique: true });
 
 module.exports = model("Room", roomSchema);
