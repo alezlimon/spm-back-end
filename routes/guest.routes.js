@@ -1,8 +1,9 @@
 const router = require("express").Router();
 const Guest = require("../models/Guest.model");
+const { isAuthenticated } = require("../middleware/jwt.middleware");
 
 // POST / - Crear un nuevo huésped
-router.post("/", async (req, res, next) => {
+router.post("/", isAuthenticated, async (req, res, next) => {
   try {
     const { birthDate, ...rest } = req.body;
     if (!birthDate || isNaN(Date.parse(birthDate))) {
@@ -43,7 +44,7 @@ router.get("/search", async (req, res, next) => {
 });
 
 // PUT /:id - Editar datos de un huésped
-router.put("/:id", async (req, res, next) => {
+router.put("/:id", isAuthenticated, async (req, res, next) => {
   try {
     const { birthDate, ...rest } = req.body;
     if (!birthDate || isNaN(Date.parse(birthDate))) {
@@ -55,6 +56,16 @@ router.put("/:id", async (req, res, next) => {
       { new: true }
     );
     res.json(updatedGuest);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE /:id - Eliminar un huésped
+router.delete("/:id", isAuthenticated, async (req, res, next) => {
+  try {
+    await Guest.findByIdAndDelete(req.params.id);
+    res.status(204).send();
   } catch (error) {
     next(error);
   }

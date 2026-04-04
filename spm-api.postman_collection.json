@@ -1,0 +1,329 @@
+{
+  "info": {
+    "name": "SPM API",
+    "description": "Hotel Property Management System — backend endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base", "value": "http://localhost:5005", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "propertyId", "value": "", "type": "string" },
+    { "key": "roomId", "value": "", "type": "string" },
+    { "key": "bookingId", "value": "", "type": "string" },
+    { "key": "guestId", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Signup",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base}}/auth/signup", "host": ["{{base}}"], "path": ["auth", "signup"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@hotel.com\",\n  \"password\": \"Test123!\",\n  \"name\": \"New User\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.authToken) pm.collectionVariables.set('token', json.authToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base}}/auth/login", "host": ["{{base}}"], "path": ["auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@hotel.com\",\n  \"password\": \"Admin123!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Verify Token",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base}}/auth/verify", "host": ["{{base}}"], "path": ["auth", "verify"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Properties",
+      "item": [
+        {
+          "name": "List all properties",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json[0]) pm.collectionVariables.set('propertyId', json[0]._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base}}/api/properties", "host": ["{{base}}"], "path": ["api", "properties"] }
+          }
+        },
+        {
+          "name": "Get property detail",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base}}/api/properties/{{propertyId}}", "host": ["{{base}}"], "path": ["api", "properties", "{{propertyId}}"] }
+          }
+        },
+        {
+          "name": "Get property rooms",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json[0]) pm.collectionVariables.set('roomId', json[0]._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base}}/api/properties/{{propertyId}}/rooms", "host": ["{{base}}"], "path": ["api", "properties", "{{propertyId}}", "rooms"] }
+          }
+        },
+        {
+          "name": "Get property overview (KPIs)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base}}/api/properties/{{propertyId}}/overview", "host": ["{{base}}"], "path": ["api", "properties", "{{propertyId}}", "overview"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rooms",
+      "item": [
+        {
+          "name": "List all rooms",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base}}/api/rooms", "host": ["{{base}}"], "path": ["api", "rooms"] }
+          }
+        },
+        {
+          "name": "Create room (auth required)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base}}/api/rooms", "host": ["{{base}}"], "path": ["api", "rooms"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"property\": \"{{propertyId}}\",\n  \"roomNumber\": \"999\",\n  \"type\": \"Double\",\n  \"pricePerNight\": 150\n}"
+            }
+          }
+        },
+        {
+          "name": "Update room (auth required)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base}}/api/rooms/{{roomId}}", "host": ["{{base}}"], "path": ["api", "rooms", "{{roomId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pricePerNight\": 175\n}"
+            }
+          }
+        },
+        {
+          "name": "Cycle room status (auth required)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base}}/api/rooms/{{roomId}}/status", "host": ["{{base}}"], "path": ["api", "rooms", "{{roomId}}", "status"] }
+          }
+        },
+        {
+          "name": "Delete room (auth required)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base}}/api/rooms/{{roomId}}", "host": ["{{base}}"], "path": ["api", "rooms", "{{roomId}}"] }
+          }
+        },
+        {
+          "name": "Room bookings history",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base}}/api/rooms/{{roomId}}/bookings", "host": ["{{base}}"], "path": ["api", "rooms", "{{roomId}}", "bookings"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "item": [
+        {
+          "name": "List all bookings",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json[0]) pm.collectionVariables.set('bookingId', json[0]._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base}}/api/bookings", "host": ["{{base}}"], "path": ["api", "bookings"] }
+          }
+        },
+        {
+          "name": "Get booking detail",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base}}/api/bookings/{{bookingId}}", "host": ["{{base}}"], "path": ["api", "bookings", "{{bookingId}}"] }
+          }
+        },
+        {
+          "name": "Create booking (auth required)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base}}/api/bookings", "host": ["{{base}}"], "path": ["api", "bookings"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"room\": \"{{roomId}}\",\n  \"guest\": \"{{guestId}}\",\n  \"checkIn\": \"2026-04-10\",\n  \"checkOut\": \"2026-04-12\",\n  \"numberOfGuests\": 2\n}"
+            }
+          }
+        },
+        {
+          "name": "Check-in booking (auth required)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base}}/api/bookings/{{bookingId}}/checkin", "host": ["{{base}}"], "path": ["api", "bookings", "{{bookingId}}", "checkin"] }
+          }
+        },
+        {
+          "name": "Check-out booking (auth required)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base}}/api/bookings/{{bookingId}}/checkout", "host": ["{{base}}"], "path": ["api", "bookings", "{{bookingId}}", "checkout"] }
+          }
+        },
+        {
+          "name": "Assign guest to booking (auth required)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base}}/api/bookings/{{bookingId}}/assign-guest", "host": ["{{base}}"], "path": ["api", "bookings", "{{bookingId}}", "assign-guest"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"guestId\": \"{{guestId}}\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Guests",
+      "item": [
+        {
+          "name": "List all guests",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json[0]) pm.collectionVariables.set('guestId', json[0]._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base}}/api/guests", "host": ["{{base}}"], "path": ["api", "guests"] }
+          }
+        },
+        {
+          "name": "Search guests",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base}}/api/guests/search?query=Guest1", "host": ["{{base}}"], "path": ["api", "guests", "search"], "query": [{ "key": "query", "value": "Guest1" }] }
+          }
+        },
+        {
+          "name": "Create guest (auth required)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base}}/api/guests", "host": ["{{base}}"], "path": ["api", "guests"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ana\",\n  \"lastName\": \"Garcia\",\n  \"email\": \"ana.garcia@example.com\",\n  \"phone\": \"600111222\",\n  \"document\": \"DNI-TEST-001\",\n  \"nationality\": \"Spanish\",\n  \"birthDate\": \"1990-06-15\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update guest (auth required)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base}}/api/guests/{{guestId}}", "host": ["{{base}}"], "path": ["api", "guests", "{{guestId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ana\",\n  \"lastName\": \"Garcia\",\n  \"email\": \"ana.garcia@example.com\",\n  \"phone\": \"600111333\",\n  \"document\": \"DNI-TEST-001\",\n  \"nationality\": \"Spanish\",\n  \"birthDate\": \"1990-06-15\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete guest (auth required)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base}}/api/guests/{{guestId}}", "host": ["{{base}}"], "path": ["api", "guests", "{{guestId}}"] }
+          }
+        }
+      ]
+    }
+  ]
+}

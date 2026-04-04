@@ -3,9 +3,11 @@ const express = require("express");
 const router = express.Router();
 const Booking = require("../models/Booking.model");
 const Room = require("../models/Room.model");
+const Guest = require("../models/Guest.model");
+const { isAuthenticated } = require("../middleware/jwt.middleware");
 
 // Check-in de una reserva
-router.put('/:id/checkin', async (req, res, next) => {
+router.put('/:id/checkin', isAuthenticated, async (req, res, next) => {
   try {
     const booking = await Booking.findByIdAndUpdate(
       req.params.id,
@@ -22,7 +24,7 @@ router.put('/:id/checkin', async (req, res, next) => {
 });
 
 // Check-out de una reserva
-router.put('/:id/checkout', async (req, res, next) => {
+router.put('/:id/checkout', isAuthenticated, async (req, res, next) => {
   try {
     const booking = await Booking.findByIdAndUpdate(
       req.params.id,
@@ -39,7 +41,7 @@ router.put('/:id/checkout', async (req, res, next) => {
 });
 
 // Crear una reserva y actualizar el estado de la habitación
-router.post("/", async (req, res, next) => {
+router.post("/", isAuthenticated, async (req, res, next) => {
   try {
     const booking = await Booking.create(req.body);
     // Cambiar el estado de la habitación a 'Occupied' automáticamente
@@ -74,11 +76,8 @@ router.get("/:id", async (req, res, next) => {
   }
 });
 
-module.exports = router;
-
 // Asociar un huésped existente a una reserva existente
-const Guest = require("../models/Guest.model");
-router.put('/:bookingId/assign-guest', async (req, res, next) => {
+router.put('/:bookingId/assign-guest', isAuthenticated, async (req, res, next) => {
   const { bookingId } = req.params;
   const { guestId } = req.body;
   try {
@@ -100,3 +99,5 @@ router.put('/:bookingId/assign-guest', async (req, res, next) => {
     next(error);
   }
 });
+
+module.exports = router;
