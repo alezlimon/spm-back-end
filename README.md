@@ -115,11 +115,31 @@ spm-back-end/
 - `POST /auth/login` — Login, returns JWT
 - `GET /auth/verify` — Verify JWT token
 
-### Rooms
-- `GET /api/rooms` — List all rooms
+### Properties (official contract — property-first architecture)
+- `GET /api/properties` — List all properties
+- `GET /api/properties/:propertyId` — Get single property detail
+- `GET /api/properties/:propertyId/rooms` — List rooms scoped to a property
+- `GET /api/properties/:propertyId/overview` — KPI overview for a property
+
+#### Overview response shape
+```json
+{
+  "arrivalsCompleted": 2,
+  "arrivalsPending": 1,
+  "departuresCompleted": 1,
+  "departuresPending": 2,
+  "occupancyPercent": 42,
+  "availableRooms": 8
+}
+```
+
+### Rooms (global — use property-scoped endpoint for frontend views)
+- `GET /api/rooms` — List all rooms (all properties)
 - `POST /api/rooms` — Create new room
 - `PUT /api/rooms/:id` — Update room
 - `DELETE /api/rooms/:id` — Delete room
+- `PATCH /api/rooms/:roomId/status` — Cycle room status
+- `GET /api/rooms/:id/bookings` — Booking history for a room
 
 ### Bookings
 - `GET /api/bookings` — List all bookings
@@ -129,6 +149,12 @@ spm-back-end/
 
 ## Models
 
+### Property.model.js
+- `name` (String, required, unique)
+- `description` (String)
+- `location` (String)
+- `image` (String — URL)
+
 ### User.model.js
 - `username` (String, required, unique)
 - `email` (String, required, unique)
@@ -136,12 +162,13 @@ spm-back-end/
 - `role` (String, enum: ["admin", "staff", "guest"], default: "guest")
 
 ### Room.model.js
-- `roomNumber` (String, required, unique)
-- `type` (String, enum: ["Single", "Double", "Suite", "Dorm"])
+- `property` (ObjectId, ref: Property, required)
+- `roomNumber` (String, required — unique per property via compound index)
+- `type` (String, enum: ["Single", "Double", "Suite", "Dorm", "Deluxe", "Familiar", "Twins"])
 - `pricePerNight` (Number, required)
 - `description` (String)
-- `isClean` (Boolean, default: true)
-- `status` (String, enum: ["Available", "Occupied", "Maintenance"], default: "Available")
+- `status` (String, enum: ["Available", "Occupied", "Dirty", "Maintenance"], default: "Available")
+- Compound unique index: `{ property, roomNumber }`
 
 ### Booking.model.js
 - `room` (ObjectId, ref: Room, required)

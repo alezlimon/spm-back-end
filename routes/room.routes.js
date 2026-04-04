@@ -1,6 +1,7 @@
 
 const router = require("express").Router();
 const Room = require("../models/Room.model");
+const { isAuthenticated } = require("../middleware/jwt.middleware");
 
 // GET - Listar todas las habitaciones
 router.get("/", (req, res, next) => {
@@ -10,15 +11,15 @@ router.get("/", (req, res, next) => {
 });
 
 // POST - Crear nueva habitación
-router.post("/", (req, res, next) => {
-  const { roomNumber, type, pricePerNight } = req.body;
-  Room.create({ roomNumber, type, pricePerNight })
+router.post("/", isAuthenticated, (req, res, next) => {
+  const { property, roomNumber, type, pricePerNight, description } = req.body;
+  Room.create({ property, roomNumber, type, pricePerNight, description })
     .then((newRoom) => res.status(201).json(newRoom))
     .catch((err) => next(err));
 });
 
 // PATCH - Lógica circular de estados (La clave del CRM)
-router.patch("/:roomId/status", async (req, res, next) => {
+router.patch("/:roomId/status", isAuthenticated, async (req, res, next) => {
   const { roomId } = req.params;
   try {
     const room = await Room.findById(roomId);
@@ -41,14 +42,14 @@ router.patch("/:roomId/status", async (req, res, next) => {
 });
 
 // PUT - Editar datos generales
-router.put("/:id", (req, res, next) => {
+router.put("/:id", isAuthenticated, (req, res, next) => {
   Room.findByIdAndUpdate(req.params.id, req.body, { new: true })
     .then((updatedRoom) => res.json(updatedRoom))
     .catch((err) => next(err));
 });
 
 // DELETE - Eliminar
-router.delete("/:id", (req, res, next) => {
+router.delete("/:id", isAuthenticated, (req, res, next) => {
   Room.findByIdAndDelete(req.params.id)
     .then(() => res.status(204).send())
     .catch((err) => next(err));
