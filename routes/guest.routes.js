@@ -9,7 +9,29 @@ router.post("/", isAuthenticated, async (req, res, next) => {
     if (!birthDate || isNaN(Date.parse(birthDate))) {
       return res.status(400).json({ message: "El campo birthDate es obligatorio y debe ser una fecha válida (YYYY-MM-DD)" });
     }
-    const guest = await Guest.create({ ...rest, birthDate });
+
+    const normalizedEmail = (rest.email || "").trim().toLowerCase();
+    const normalizedDocument = (rest.document || "").trim().toUpperCase();
+
+    const existingGuest = await Guest.findOne({
+      $or: [{ email: normalizedEmail }, { document: normalizedDocument }],
+    });
+
+    if (existingGuest) {
+      return res.status(200).json({
+        reused: true,
+        message: "Guest already existed. Reusing existing record.",
+        guest: existingGuest,
+      });
+    }
+
+    const guest = await Guest.create({
+      ...rest,
+      email: normalizedEmail,
+      document: normalizedDocument,
+      birthDate,
+    });
+
     res.status(201).json(guest);
   } catch (error) {
     next(error);
