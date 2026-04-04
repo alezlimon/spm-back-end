@@ -2,11 +2,27 @@ const router = require("express").Router();
 const Guest = require("../models/Guest.model");
 const { isAuthenticated } = require("../middleware/jwt.middleware");
 
+function parseDateInput(value) {
+  if (!value) return null;
+
+  if (value instanceof Date) return value;
+
+  const raw = String(value).trim();
+  const ddmmyyyyMatch = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (ddmmyyyyMatch) {
+    const [, day, month, year] = ddmmyyyyMatch;
+    return new Date(`${year}-${month}-${day}`);
+  }
+
+  return new Date(raw);
+}
+
 // POST / - Crear un nuevo huésped
 router.post("/", isAuthenticated, async (req, res, next) => {
   try {
     const { birthDate, ...rest } = req.body;
-    if (!birthDate || isNaN(Date.parse(birthDate))) {
+    const parsedBirthDate = parseDateInput(birthDate);
+    if (!parsedBirthDate || Number.isNaN(parsedBirthDate.getTime())) {
       return res.status(400).json({ message: "El campo birthDate es obligatorio y debe ser una fecha válida (YYYY-MM-DD)" });
     }
 
@@ -29,7 +45,7 @@ router.post("/", isAuthenticated, async (req, res, next) => {
       ...rest,
       email: normalizedEmail,
       document: normalizedDocument,
-      birthDate,
+      birthDate: parsedBirthDate,
     });
 
     res.status(201).json(guest);
@@ -69,12 +85,13 @@ router.get("/search", async (req, res, next) => {
 router.put("/:id", isAuthenticated, async (req, res, next) => {
   try {
     const { birthDate, ...rest } = req.body;
-    if (!birthDate || isNaN(Date.parse(birthDate))) {
+    const parsedBirthDate = parseDateInput(birthDate);
+    if (!parsedBirthDate || Number.isNaN(parsedBirthDate.getTime())) {
       return res.status(400).json({ message: "El campo birthDate es obligatorio y debe ser una fecha válida (YYYY-MM-DD)" });
     }
     const updatedGuest = await Guest.findByIdAndUpdate(
       req.params.id,
-      { ...rest, birthDate },
+      { ...rest, birthDate: parsedBirthDate },
       { new: true }
     );
     res.json(updatedGuest);

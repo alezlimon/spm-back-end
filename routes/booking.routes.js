@@ -6,6 +6,38 @@ const Room = require("../models/Room.model");
 const Guest = require("../models/Guest.model");
 const { isAuthenticated } = require("../middleware/jwt.middleware");
 
+function parseDateInput(value) {
+  if (!value) return null;
+
+  if (value instanceof Date) return value;
+
+  const raw = String(value).trim();
+  const ddmmyyyyMatch = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (ddmmyyyyMatch) {
+    const [, day, month, year] = ddmmyyyyMatch;
+    return new Date(`${year}-${month}-${day}`);
+  }
+
+  return new Date(raw);
+}
+
+function normalizeBookingStatus(status) {
+  if (!status) return undefined;
+
+  const normalized = String(status).trim().toLowerCase();
+  const statusMap = {
+    confirmed: "Confirmed",
+    "checked-in": "Checked-in",
+    checkedin: "Checked-in",
+    "checked-out": "Checked-out",
+    checkedout: "Checked-out",
+    cancelled: "Cancelled",
+    canceled: "Cancelled",
+  };
+
+  return statusMap[normalized] || status;
+}
+
 // Check-in de una reserva
 router.put('/:id/checkin', isAuthenticated, async (req, res, next) => {
   try {
@@ -65,8 +97,8 @@ router.post("/", isAuthenticated, async (req, res, next) => {
       return res.status(404).json({ message: "Room not found" });
     }
 
-    const checkInDate = new Date(checkIn);
-    const checkOutDate = new Date(checkOut);
+    const checkInDate = parseDateInput(checkIn);
+    const checkOutDate = parseDateInput(checkOut);
     if (Number.isNaN(checkInDate.getTime()) || Number.isNaN(checkOutDate.getTime())) {
       return res.status(400).json({ message: "checkIn and checkOut must be valid dates" });
     }
@@ -99,10 +131,16 @@ router.post("/", isAuthenticated, async (req, res, next) => {
       if (existingGuest) {
         resolvedGuest = existingGuest._id;
       } else {
+        const parsedBirthDate = parseDateInput(inlineGuest.birthDate);
+        if (!parsedBirthDate || Number.isNaN(parsedBirthDate.getTime())) {
+          return res.status(400).json({ message: "primaryGuest.birthDate must be a valid date" });
+        }
+
         const createdGuest = await Guest.create({
           ...inlineGuest,
           email: normalizedEmail,
           document: normalizedDocument,
+          birthDate: parsedBirthDate,
         });
         resolvedGuest = createdGuest._id;
       }
@@ -125,7 +163,7 @@ router.post("/", isAuthenticated, async (req, res, next) => {
       checkOut: checkOutDate,
       numberOfGuests: numberOfGuests ?? 1,
       totalPrice: computedTotalPrice,
-      status,
+      status: normalizeBookingStatus(status),
     });
 
     // Cambiar el estado de la habitación a 'Occupied' automáticamente
