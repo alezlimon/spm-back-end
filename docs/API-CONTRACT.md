@@ -147,6 +147,16 @@ Booking detail contract (sprint-frozen):
 - Not found returns 404 with BOOKING_NOT_FOUND envelope
 - Missing/invalid token returns 401 with AUTH_INVALID_TOKEN envelope
 
+Pricing snapshot in booking detail:
+- Not included yet in current payload.
+- Planned fields for next contract increment:
+  - base
+  - taxes
+  - discounts
+  - total
+  - currency
+- Current available pricing field: totalPrice
+
 Not implemented:
 - PUT /api/bookings/:id
 - PATCH /api/bookings/:id
@@ -201,6 +211,93 @@ Result:
 - Error contract rollout date: 2026-04-05
 - Frontend fallback translation removal target: 2026-04-12
 - After this date, frontend should consume backend errors directly.
+
+## Billing Display Contract Freeze
+
+- Official timezone: UTC
+- Currency: EUR
+- Rounding rule: half-up, 2 decimals
+
+Current implementation note:
+- booking totalPrice is currently persisted as a Number and computed from room price and nights where totalPrice is not provided.
+- full billing snapshot fields (base, taxes, discounts, total, currency) are planned but not yet returned in booking detail payload.
+
+## Invoices Contract Freeze (MVP)
+
+Frontend billing MVP request has been accepted as the frozen target contract.
+
+Implementation status:
+- Endpoints in this section are contract-frozen but not yet implemented in backend routes/models.
+- Until implementation is live, frontend may keep temporary mock fallback.
+
+### GET /api/invoices
+
+Filters:
+- propertyId
+- status
+- search
+- optional from
+- optional to
+
+Response:
+- array of invoices with:
+  - id or _id
+  - invoiceNumber
+  - propertyId
+  - bookingId
+  - guestName or guest snapshot
+  - currency
+  - subtotal
+  - taxes
+  - discounts
+  - total
+  - amountPaid
+  - balanceDue
+  - status = draft, issued, partially_paid, paid, void, overdue
+  - issuedAt
+  - dueDate
+
+### GET /api/invoices/:id
+
+Response:
+- full invoice detail
+- payments array
+
+### POST /api/invoices
+
+Payload:
+- propertyId
+- bookingId optional
+- guestName or guest snapshot
+- subtotal
+- taxes
+- discounts
+- dueDate
+
+Backend rules:
+- backend calculates and persists final totals
+- backend persists audit-safe pricing snapshot in invoice record
+
+### POST /api/invoices/:id/payments
+
+Payload:
+- amount
+- method = card, cash, bank_transfer
+- reference
+- notes
+- paidAt
+
+Backend rules:
+- backend recalculates amountPaid
+- backend recalculates balanceDue
+- backend recalculates final invoice status
+
+### Global ownership and finance rules
+
+- Currency: EUR
+- Rounding: half-up, 2 decimals
+- Timezone: UTC
+- overdue status is backend-owned once this contract is live
 
 ## Integration Assets
 
