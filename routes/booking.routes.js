@@ -216,10 +216,12 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-// Obtener detalle de una reserva por ID, incluyendo huésped y habitación
-router.get("/:id", async (req, res, next) => {
+// Get booking detail by ID with stable populated room/guest shape
+router.get("/:id", isAuthenticated, async (req, res, next) => {
   try {
-    const booking = await Booking.findById(req.params.id).populate("room").populate("guest");
+    const booking = await Booking.findById(req.params.id)
+      .populate("room", "_id roomNumber type")
+      .populate("guest", "_id firstName lastName email");
     if (!booking) {
       return sendError(res, 404, "Booking not found.", "BOOKING_NOT_FOUND");
     }

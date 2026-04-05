@@ -139,6 +139,14 @@ Implemented:
 - PUT /api/bookings/:id/checkout
 - PUT /api/bookings/:bookingId/assign-guest
 
+Booking detail contract (sprint-frozen):
+- GET /api/bookings/:id requires Authorization Bearer token
+- On success, room and guest are populated with a stable minimal shape:
+  - room: _id, roomNumber, type
+  - guest: _id, firstName, lastName, email
+- Not found returns 404 with BOOKING_NOT_FOUND envelope
+- Missing/invalid token returns 401 with AUTH_INVALID_TOKEN envelope
+
 Not implemented:
 - PUT /api/bookings/:id
 - PATCH /api/bookings/:id
