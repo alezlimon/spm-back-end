@@ -1,7 +1,9 @@
+const { sendError } = require("../utils/error-response");
+
 module.exports = (app) => {
   app.use((req, res, next) => {
     // this middleware runs whenever requested page is not available
-    res.status(404).json({ message: "This route does not exist" });
+    return sendError(res, 404, "This route does not exist", "ROUTE_NOT_FOUND");
   });
 
   app.use((err, req, res, next) => {
@@ -11,19 +13,28 @@ module.exports = (app) => {
 
     // Handle JWT UnauthorizedError from express-jwt
     if (err.name === "UnauthorizedError") {
-      return res.status(401).json({ message: "Invalid or missing token" });
+      return sendError(res, 401, "Invalid or missing token", "AUTH_INVALID_TOKEN");
     }
 
     // Mongoose validation/cast errors should be client errors, not 500.
     if (err.name === "ValidationError") {
-      return res.status(400).json({
-        message: "Validation error",
-        details: Object.values(err.errors).map((e) => e.message),
-      });
+      return sendError(
+        res,
+        400,
+        "Validation error",
+        "VALIDATION_ERROR",
+        Object.values(err.errors).map((e) => e.message)
+      );
     }
 
     if (err.name === "CastError") {
-      return res.status(400).json({ message: `Invalid ${err.path}: ${err.value}` });
+      return sendError(
+        res,
+        400,
+        `Invalid ${err.path}: ${err.value}`,
+        "INVALID_INPUT",
+        [`${err.path} has an invalid value`]
+      );
     }
 
     if (err.code === 11000) {
@@ -31,19 +42,25 @@ module.exports = (app) => {
       const isGuestIdentityConflict =
         duplicateFields.includes("email") || duplicateFields.includes("document");
 
-      return res.status(409).json({
-        message: isGuestIdentityConflict
+      return sendError(
+        res,
+        409,
+        isGuestIdentityConflict
           ? "Guest already exists with the same email or ID/passport"
           : "Duplicate value detected",
-        fields: duplicateFields,
-      });
+        isGuestIdentityConflict ? "GUEST_DUPLICATE" : "DUPLICATE_RESOURCE",
+        duplicateFields
+      );
     }
 
     // only render if the error ocurred before sending the response
     if (!res.headersSent) {
-      res.status(500).json({
-        message: "Internal server error. Check the server console",
-      });
+      return sendError(
+        res,
+        500,
+        "Internal server error. Check the server console",
+        "INTERNAL_SERVER_ERROR"
+      );
     }
   });
 };

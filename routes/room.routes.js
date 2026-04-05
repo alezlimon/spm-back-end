@@ -2,6 +2,7 @@
 const router = require("express").Router();
 const Room = require("../models/Room.model");
 const { isAuthenticated } = require("../middleware/jwt.middleware");
+const { sendError } = require("../utils/error-response");
 
 // GET - Listar todas las habitaciones
 router.get("/", (req, res, next) => {
@@ -23,7 +24,7 @@ router.patch("/:roomId/status", isAuthenticated, async (req, res, next) => {
   const { roomId } = req.params;
   try {
     const room = await Room.findById(roomId);
-    if (!room) return res.status(404).json({ message: "Room not found" });
+    if (!room) return sendError(res, 404, "Room not found", "ROOM_NOT_FOUND");
 
     let nextStatus = room.status;
     if (room.status === "Available") nextStatus = "Occupied";
