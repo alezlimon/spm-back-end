@@ -3,6 +3,8 @@
 ## Overview
 This is a robust, production-ready Node.js/Express/Mongoose backend for a Hotel Property Management System (PMS). It provides secure, modular, and scalable RESTful APIs for managing rooms, bookings, and users, with JWT-based authentication and role-based access control.
 
+Integration contract for frontend handoff: `docs/API-CONTRACT.md`
+
 ---
 
 ## Table of Contents

@@ -3,6 +3,7 @@ const router = express.Router();
 const Property = require("../models/Property.model");
 const Room = require("../models/Room.model");
 const Booking = require("../models/Booking.model");
+const { sendError } = require("../utils/error-response");
 
 // GET /api/properties - List all properties
 router.get("/", async (req, res, next) => {
@@ -19,7 +20,7 @@ router.get("/:propertyId", async (req, res, next) => {
   try {
     const property = await Property.findById(req.params.propertyId);
     if (!property) {
-      return res.status(404).json({ message: "Property not found" });
+      return sendError(res, 404, "Property not found", "PROPERTY_NOT_FOUND");
     }
     res.json(property);
   } catch (err) {
@@ -44,7 +45,12 @@ router.get("/:propertyId/overview", async (req, res, next) => {
 
     const rooms = await Room.find({ property: propertyId });
     if (!rooms.length) {
-      return res.status(404).json({ message: "No rooms found for this property" });
+      return sendError(
+        res,
+        404,
+        "No rooms found for this property",
+        "PROPERTY_ROOMS_NOT_FOUND"
+      );
     }
 
     const roomIds = rooms.map((r) => r._id);

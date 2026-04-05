@@ -9,6 +9,7 @@ const jwt = require("jsonwebtoken");
 
 // Require the User model in order to interact with the database
 const User = require("../models/User.model.js");
+const { sendError } = require("../utils/error-response");
 
 // Require necessary (isAuthenticated) middleware in order to control access to specific routes
 const { isAuthenticated } = require("../middleware/jwt.middleware.js");
@@ -22,25 +23,40 @@ router.post("/signup", (req, res, next) => {
 
   // Check if email or password or name are provided as empty strings
   if (email === "" || password === "" || name === "") {
-    res.status(400).json({ message: "Provide email, password and name" });
-    return;
+    return sendError(
+      res,
+      400,
+      "Provide email, password and name",
+      "AUTH_SIGNUP_REQUIRED_FIELDS",
+      ["email is required", "password is required", "name is required"]
+    );
   }
 
   // This regular expression check that the email is of a valid format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
   if (!emailRegex.test(email)) {
-    res.status(400).json({ message: "Provide a valid email address." });
-    return;
+    return sendError(
+      res,
+      400,
+      "Provide a valid email address.",
+      "AUTH_EMAIL_INVALID",
+      ["email must be a valid email address"]
+    );
   }
 
   // This regular expression checks password for special characters and minimum length
   const passwordRegex = /(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}/;
   if (!passwordRegex.test(password)) {
-    res.status(400).json({
-      message:
-        "Password must have at least 6 characters and contain at least one number, one lowercase and one uppercase letter.",
-    });
-    return;
+    return sendError(
+      res,
+      400,
+      "Password must have at least 6 characters and contain at least one number, one lowercase and one uppercase letter.",
+      "AUTH_PASSWORD_WEAK",
+      [
+        "password must be at least 6 characters",
+        "password must include one number, one lowercase and one uppercase letter",
+      ]
+    );
   }
 
   // Check the users collection if a user with the same email already exists
@@ -48,8 +64,13 @@ router.post("/signup", (req, res, next) => {
     .then((foundUser) => {
       // If the user with the same email already exists, send an error response
       if (foundUser) {
-        res.status(400).json({ message: "User already exists." });
-        return;
+        return sendError(
+          res,
+          409,
+          "User already exists.",
+          "AUTH_USER_ALREADY_EXISTS",
+          ["email is already in use"]
+        );
       }
 
       // If email is unique, proceed to hash the password
@@ -80,8 +101,13 @@ router.post("/login", (req, res, next) => {
 
   // Check if email or password are provided as empty string
   if (email === "" || password === "") {
-    res.status(400).json({ message: "Provide email and password." });
-    return;
+    return sendError(
+      res,
+      400,
+      "Provide email and password.",
+      "AUTH_LOGIN_REQUIRED_FIELDS",
+      ["email is required", "password is required"]
+    );
   }
 
   // Check the users collection if a user with the same email exists
@@ -89,8 +115,7 @@ router.post("/login", (req, res, next) => {
     .then((foundUser) => {
       if (!foundUser) {
         // If the user is not found, send an error response
-        res.status(401).json({ message: "User not found." });
-        return;
+        return sendError(res, 401, "User not found.", "AUTH_INVALID_CREDENTIALS");
       }
 
       // Compare the provided password with the one saved in the database
@@ -112,7 +137,12 @@ router.post("/login", (req, res, next) => {
         // Send the token as the response
         res.status(200).json({ authToken: authToken });
       } else {
-        res.status(401).json({ message: "Unable to authenticate the user" });
+        return sendError(
+          res,
+          401,
+          "Unable to authenticate the user",
+          "AUTH_INVALID_CREDENTIALS"
+        );
       }
     })
     .catch((err) => next(err)); // In this case, we send error handling to the error handling middleware.
