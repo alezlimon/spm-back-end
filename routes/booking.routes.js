@@ -4,7 +4,7 @@ const router = express.Router();
 const Booking = require("../models/Booking.model");
 const Room = require("../models/Room.model");
 const Guest = require("../models/Guest.model");
-const { isAuthenticated } = require("../middleware/jwt.middleware");
+const { isAuthenticated, requireAdmin } = require("../middleware/jwt.middleware");
 const { sendError } = require("../utils/error-response");
 
 function parseDateInput(value) {
@@ -40,7 +40,7 @@ function normalizeBookingStatus(status) {
 }
 
 // Check-in de una reserva
-router.put('/:id/checkin', isAuthenticated, async (req, res, next) => {
+router.put('/:id/checkin', isAuthenticated, requireAdmin, async (req, res, next) => {
   try {
     const booking = await Booking.findByIdAndUpdate(
       req.params.id,
@@ -57,7 +57,7 @@ router.put('/:id/checkin', isAuthenticated, async (req, res, next) => {
 });
 
 // Check-out de una reserva
-router.put('/:id/checkout', isAuthenticated, async (req, res, next) => {
+router.put('/:id/checkout', isAuthenticated, requireAdmin, async (req, res, next) => {
   try {
     const booking = await Booking.findByIdAndUpdate(
       req.params.id,
@@ -74,7 +74,7 @@ router.put('/:id/checkout', isAuthenticated, async (req, res, next) => {
 });
 
 // Crear una reserva y actualizar el estado de la habitación
-router.post("/", isAuthenticated, async (req, res, next) => {
+router.post("/", isAuthenticated, requireAdmin, async (req, res, next) => {
   try {
     const {
       room,
@@ -217,7 +217,7 @@ router.get("/", async (req, res, next) => {
 });
 
 // Get booking detail by ID with stable populated room/guest shape
-router.get("/:id", isAuthenticated, async (req, res, next) => {
+router.get("/:id", isAuthenticated, requireAdmin, async (req, res, next) => {
   try {
     const booking = await Booking.findById(req.params.id)
       .populate("room", "_id roomNumber type")
@@ -232,7 +232,7 @@ router.get("/:id", isAuthenticated, async (req, res, next) => {
 });
 
 // Asociar un huésped existente a una reserva existente
-router.put('/:bookingId/assign-guest', isAuthenticated, async (req, res, next) => {
+router.put('/:bookingId/assign-guest', isAuthenticated, requireAdmin, async (req, res, next) => {
   const { bookingId } = req.params;
   const { guestId } = req.body;
   try {

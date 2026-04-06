@@ -1,4 +1,5 @@
 const { expressjwt: jwt } = require("express-jwt");
+const { sendError } = require("../utils/error-response");
 
 // Instantiate the JWT token validation middleware
 const isAuthenticated = jwt({
@@ -24,6 +25,20 @@ function getTokenFromHeaders(req) {
 }
 
 // Export the middleware so that we can use it to create protected routes
+function requireAdmin(req, res, next) {
+  if (!req.payload || req.payload.role !== "admin") {
+    return sendError(
+      res,
+      403,
+      "Admin role is required for this action.",
+      "AUTH_FORBIDDEN"
+    );
+  }
+
+  return next();
+}
+
 module.exports = {
   isAuthenticated,
+  requireAdmin,
 };

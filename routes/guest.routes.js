@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const Guest = require("../models/Guest.model");
-const { isAuthenticated } = require("../middleware/jwt.middleware");
+const { isAuthenticated, requireAdmin } = require("../middleware/jwt.middleware");
 const { sendError } = require("../utils/error-response");
 
 function parseDateInput(value) {
@@ -19,7 +19,7 @@ function parseDateInput(value) {
 }
 
 // POST / - Crear un nuevo huésped
-router.post("/", isAuthenticated, async (req, res, next) => {
+router.post("/", isAuthenticated, requireAdmin, async (req, res, next) => {
   try {
     const { birthDate, ...rest } = req.body;
     const parsedBirthDate = parseDateInput(birthDate);
@@ -101,7 +101,7 @@ router.get("/search", async (req, res, next) => {
 });
 
 // PUT /:id - Editar datos de un huésped
-router.put("/:id", isAuthenticated, async (req, res, next) => {
+router.put("/:id", isAuthenticated, requireAdmin, async (req, res, next) => {
   try {
     const { birthDate, ...rest } = req.body;
     const parsedBirthDate = parseDateInput(birthDate);
@@ -129,7 +129,7 @@ router.put("/:id", isAuthenticated, async (req, res, next) => {
 });
 
 // DELETE /:id - Eliminar un huésped
-router.delete("/:id", isAuthenticated, async (req, res, next) => {
+router.delete("/:id", isAuthenticated, requireAdmin, async (req, res, next) => {
   try {
     const deletedGuest = await Guest.findByIdAndDelete(req.params.id);
     if (!deletedGuest) {
