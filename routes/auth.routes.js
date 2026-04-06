@@ -14,85 +14,15 @@ const { sendError } = require("../utils/error-response");
 // Require necessary (isAuthenticated) middleware in order to control access to specific routes
 const { isAuthenticated } = require("../middleware/jwt.middleware.js");
 
-// How many rounds should bcrypt run the salt (default - 10 rounds)
-const saltRounds = 10;
-
 // POST /auth/signup  - Creates a new user in the database
 router.post("/signup", (req, res, next) => {
-  const { email, password, name } = req.body;
-
-  // Check if email or password or name are provided as empty strings
-  if (email === "" || password === "" || name === "") {
-    return sendError(
-      res,
-      400,
-      "Provide email, password and name",
-      "AUTH_SIGNUP_REQUIRED_FIELDS",
-      ["email is required", "password is required", "name is required"]
-    );
-  }
-
-  // This regular expression check that the email is of a valid format
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-  if (!emailRegex.test(email)) {
-    return sendError(
-      res,
-      400,
-      "Provide a valid email address.",
-      "AUTH_EMAIL_INVALID",
-      ["email must be a valid email address"]
-    );
-  }
-
-  // This regular expression checks password for special characters and minimum length
-  const passwordRegex = /(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}/;
-  if (!passwordRegex.test(password)) {
-    return sendError(
-      res,
-      400,
-      "Password must have at least 6 characters and contain at least one number, one lowercase and one uppercase letter.",
-      "AUTH_PASSWORD_WEAK",
-      [
-        "password must be at least 6 characters",
-        "password must include one number, one lowercase and one uppercase letter",
-      ]
-    );
-  }
-
-  // Check the users collection if a user with the same email already exists
-  User.findOne({ email })
-    .then((foundUser) => {
-      // If the user with the same email already exists, send an error response
-      if (foundUser) {
-        return sendError(
-          res,
-          409,
-          "User already exists.",
-          "AUTH_USER_ALREADY_EXISTS",
-          ["email is already in use"]
-        );
-      }
-
-      // If email is unique, proceed to hash the password
-      const salt = bcrypt.genSaltSync(saltRounds);
-      const hashedPassword = bcrypt.hashSync(password, salt);
-
-      // Create the new user in the database
-      // We return a pending promise, which allows us to chain another `then`
-      return User.create({ email, password: hashedPassword, name });
-    })
-    .then((createdUser) => {
-      // Deconstruct the newly created user object to omit the password
-      // We should never expose passwords publicly
-      const { email, name, _id } = createdUser;
-
-      // Create a new object that doesn't expose the password
-      const user = { email, name, _id };
-
-      // Send a json response containing the user object
-      res.status(201).json({ user: user });
-    })
-    .catch((err) => next(err)); // In this case, we send error handling to the error handling middleware.
+  // Public signup is disabled for admin-panel-only access.
+  return sendError(
+    res,
+    403,
+    "Signup is disabled. Contact an administrator.",
+    "AUTH_SIGNUP_DISABLED"
+  );
 });
 
 // POST  /auth/login - Verifies email and password and returns a JWT
@@ -112,10 +42,17 @@ router.post("/login", (req, res, next) => {
 
   // Check the users collection if a user with the same email exists
   User.findOne({ email })
-    .then((foundUser) => {
+    .then(async (foundUser) => {
       if (!foundUser) {
         // If the user is not found, send an error response
         return sendError(res, 401, "User not found.", "AUTH_INVALID_CREDENTIALS");
+      }
+
+      // Soft migration path for older users created before role existed.
+      if (!foundUser.role) {
+        const adminEmails = ["alejandro.perez@reva.com", "luana.aguilo@reva.com"];
+        foundUser.role = adminEmails.includes(foundUser.email) ? "admin" : "staff";
+        await foundUser.save();
       }
 
       // Compare the provided password with the one saved in the database
@@ -123,10 +60,10 @@ router.post("/login", (req, res, next) => {
 
       if (passwordCorrect) {
         // Deconstruct the user object to omit the password
-        const { _id, email, name } = foundUser;
+        const { _id, email, name, role } = foundUser;
 
         // Create an object that will be set as the token payload
-        const payload = { _id, email, name };
+        const payload = { _id, email, name, role };
 
         // Create a JSON Web Token and sign it
         const authToken = jwt.sign(payload, process.env.TOKEN_SECRET, {

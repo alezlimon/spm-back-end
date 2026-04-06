@@ -226,10 +226,32 @@ async function seed() {
     console.log(`${rooms.length} rooms seeded`);
 
     const salt = bcrypt.genSaltSync(10);
+    const tempAdminPassword = "RevaAdmin2026!";
     await User.insertMany([
-      { email: "admin@reva.com", password: bcrypt.hashSync("Admin123", salt), name: "Admin" },
-      { email: "ops@reva.com", password: bcrypt.hashSync("Ops12345", salt), name: "Operations" },
-      { email: "staff@reva.com", password: bcrypt.hashSync("Staff123", salt), name: "Staff" }
+      {
+        email: "alejandro.perez@reva.com",
+        password: bcrypt.hashSync(tempAdminPassword, salt),
+        name: "Alejandro Perez",
+        role: "admin",
+      },
+      {
+        email: "luana.aguilo@reva.com",
+        password: bcrypt.hashSync(tempAdminPassword, salt),
+        name: "Luana Aguilo",
+        role: "admin",
+      },
+      {
+        email: "ops@reva.com",
+        password: bcrypt.hashSync("Ops12345", salt),
+        name: "Operations",
+        role: "staff",
+      },
+      {
+        email: "staff@reva.com",
+        password: bcrypt.hashSync("Staff123", salt),
+        name: "Staff",
+        role: "staff",
+      }
     ]);
     console.log("Users seeded");
 
