@@ -9,297 +9,298 @@ const Property = require("../models/Property.model");
 
 const MONGO_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/spm";
 
+const PRICES = {
+  Single: 80,
+  Double: 120,
+  Suite: 250,
+  Deluxe: 180,
+  Familiar: 150,
+  Twins: 100,
+  Dorm: 35
+};
+
+const PROPERTY_CONFIGS = [
+  {
+    name: "Alpine House",
+    propertyType: "hotel",
+    description: "Mountain retreat with panoramic Alpine views.",
+    location: "Chamonix, France",
+    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800",
+    inventory: [
+      { type: "Suite", count: 2 },
+      { type: "Deluxe", count: 6 },
+      { type: "Familiar", count: 2 },
+      { type: "Twins", count: 4 }
+    ]
+  },
+  {
+    name: "Dune House",
+    propertyType: "hotel",
+    description: "Desert boutique hotel surrounded by golden dunes.",
+    location: "Sahara, Morocco",
+    image: "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=800",
+    inventory: [
+      { type: "Suite", count: 2 },
+      { type: "Double", count: 20 }
+    ]
+  },
+  {
+    name: "Riad Noir",
+    propertyType: "hotel",
+    description: "Traditional Moroccan riad with courtyard garden.",
+    location: "Marrakech, Morocco",
+    image: "https://images.unsplash.com/photo-1539020140153-e479b8c22e70?w=800",
+    inventory: [
+      { type: "Single", count: 6 },
+      { type: "Double", count: 6 },
+      { type: "Familiar", count: 4 }
+    ]
+  },
+  {
+    name: "Harbor Club",
+    propertyType: "hotel",
+    description: "Waterfront hotel with private marina access.",
+    location: "Barcelona, Spain",
+    image: "https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=800",
+    inventory: [
+      { type: "Double", count: 20 },
+      { type: "Twins", count: 20 },
+      { type: "Single", count: 10 }
+    ]
+  },
+  {
+    name: "Villa Azure",
+    propertyType: "villa",
+    description: "Cliffside villa with infinity pool overlooking the sea.",
+    location: "Santorini, Greece",
+    image: "https://images.unsplash.com/photo-1570737209810-87a8e7245f88?w=800",
+    inventory: [
+      { type: "Suite", count: 4 },
+      { type: "Double", count: 4 },
+      { type: "Twins", count: 4 }
+    ]
+  },
+  {
+    name: "Villa Mirador",
+    propertyType: "villa",
+    description: "Hilltop estate with panoramic countryside views.",
+    location: "Tuscany, Italy",
+    image: "https://images.unsplash.com/photo-1523531294919-4bcd7c65e216?w=800",
+    inventory: [
+      { type: "Suite", count: 4 },
+      { type: "Double", count: 8 },
+      { type: "Familiar", count: 4 },
+      { type: "Single", count: 2 }
+    ]
+  },
+  {
+    name: "Villa Solene",
+    propertyType: "villa",
+    description: "Provençal estate surrounded by vineyards and lavender.",
+    location: "Provence, France",
+    image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800",
+    inventory: [
+      { type: "Suite", count: 3 },
+      { type: "Twins", count: 5 },
+      { type: "Double", count: 10 },
+      { type: "Single", count: 4 }
+    ]
+  }
+];
+
+function buildRoomDocs(propertyId, inventory) {
+  const docs = [];
+  let num = 101;
+
+  for (const { type, count } of inventory) {
+    for (let i = 0; i < count; i++) {
+      docs.push({
+        property: propertyId,
+        roomNumber: String(num++),
+        type,
+        pricePerNight: PRICES[type],
+        status: "Available"
+      });
+    }
+  }
+
+  return docs;
+}
+
 async function seed() {
   try {
     await mongoose.connect(MONGO_URI);
     console.log("Connected to MongoDB");
 
     await Booking.deleteMany();
-    await Room.deleteMany();
-    await User.deleteMany();
     await Guest.deleteMany();
+    await User.deleteMany();
     await Property.deleteMany();
-
-    const properties = await Property.insertMany([
-      {
-        name: "Dune House",
-        type: "Hotel",
-        location: "AlUla, Saudi Arabia",
-        image:
-          "https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?auto=format&fit=crop&w=1600&q=80",
-        description:
-          "Boutique desert hotel designed around remote luxury, quiet arrival rituals, private suites, and high-touch hospitality operations.",
-        status: "Active"
-      },
-      {
-        name: "Alpine House",
-        type: "Hotel",
-        location: "St. Moritz, Switzerland",
-        image:
-          "https://images.unsplash.com/photo-1518732714860-b62714ce0c59?auto=format&fit=crop&w=1600&q=80",
-        description:
-          "Luxury alpine hotel with winter-season readiness, polished guest flow, and discreet service in a high-altitude market.",
-        status: "Maintenance"
-      },
-      {
-        name: "Harbor Club",
-        type: "Hotel",
-        location: "Porto Cervo, Italy",
-        image:
-          "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1600&q=80",
-        description:
-          "Mediterranean coastal hotel designed for polished arrivals, terrace dining, marina-adjacent stays, and summer guest operations.",
-        status: "Active"
-      },
-      {
-        name: "Lagoon Resort",
-        type: "Hotel",
-        location: "Bali, Indonesia",
-        image:
-          "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1600&q=80",
-        description:
-          "Resort property centered around poolside hospitality, open-air circulation, and premium suite operations.",
-        status: "Active"
-      },
-      {
-        name: "Riad Noir",
-        type: "Hotel",
-        location: "Marrakech, Morocco",
-        image:
-          "https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=1600&q=80",
-        description:
-          "Intimate riad-style hotel with courtyard-centered circulation, evening hospitality rhythm, and high-touch guest operations.",
-        status: "Active"
-      },
-      {
-        name: "Villa Azure",
-        type: "Villa",
-        location: "Marbella, Spain",
-        image:
-          "https://images.unsplash.com/photo-1605146769289-440113cc3d00?auto=format&fit=crop&w=1600&q=80",
-        description:
-          "Contemporary private villa designed for full-property stays, smooth turnover, and high-end guest servicing.",
-        status: "Booked"
-      },
-      {
-        name: "Villa Serena",
-        type: "Villa",
-        location: "Ibiza, Spain",
-        image:
-          "https://images.unsplash.com/photo-1613977257365-aaae5a9817ff?auto=format&fit=crop&w=1600&q=80",
-        description:
-          "Mediterranean villa with private outdoor living, guest-ready suite setup, and concierge-style operations.",
-        status: "Active"
-      },
-      {
-        name: "Villa Solene",
-        type: "Villa",
-        location: "Cap Ferrat, France",
-        image:
-          "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=1600&q=80",
-        description:
-          "Seafront villa with layered terraces, discreet hosting flow, and full-estate readiness standards.",
-        status: "Active"
-      },
-      {
-        name: "Villa Mirador",
-        type: "Villa",
-        location: "Mallorca, Spain",
-        image:
-          "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1600&q=80",
-        description:
-          "Hillside villa with panoramic outdoor living, elevated guest privacy, and prep-heavy turnover operations.",
-        status: "Maintenance"
-      }
-    ]);
-
-    const propertyMap = {
-      duneHouse: properties[0],
-      alpineHouse: properties[1],
-      harborClub: properties[2],
-      lagoonResort: properties[3],
-      riadNoir: properties[4],
-      villaAzure: properties[5],
-      villaSerena: properties[6],
-      villaSolene: properties[7],
-      villaMirador: properties[8]
-    };
-
-    console.log("Properties seeded");
-
-    const roomBlueprints = [
-      {
-        property: propertyMap.duneHouse,
-        prefix: "DUNE",
-        startNumber: 101,
-        rooms: 10,
-        statuses: ["Occupied", "Occupied", "Available", "Available", "Dirty", "Available", "Available", "Occupied", "Maintenance", "Available"]
-      },
-      {
-        property: propertyMap.alpineHouse,
-        prefix: "ALPINE",
-        startNumber: 201,
-        rooms: 10,
-        statuses: ["Maintenance", "Maintenance", "Dirty", "Available", "Available", "Occupied", "Available", "Available", "Occupied", "Available"]
-      },
-      {
-        property: propertyMap.harborClub,
-        prefix: "HARBOR",
-        startNumber: 301,
-        rooms: 10,
-        statuses: ["Occupied", "Available", "Available", "Occupied", "Dirty", "Available", "Available", "Available", "Available", "Maintenance"]
-      },
-      {
-        property: propertyMap.lagoonResort,
-        prefix: "LAGOON",
-        startNumber: 401,
-        rooms: 12,
-        statuses: ["Occupied", "Occupied", "Available", "Available", "Available", "Dirty", "Available", "Available", "Available", "Available", "Maintenance", "Available"]
-      },
-      {
-        property: propertyMap.riadNoir,
-        prefix: "RIAD",
-        startNumber: 501,
-        rooms: 8,
-        statuses: ["Occupied", "Available", "Available", "Dirty", "Available", "Occupied", "Available", "Maintenance"]
-      },
-      {
-        property: propertyMap.villaAzure,
-        prefix: "AZURE",
-        startNumber: 1,
-        rooms: 4,
-        statuses: ["Occupied", "Occupied", "Available", "Dirty"]
-      },
-      {
-        property: propertyMap.villaSerena,
-        prefix: "SERENA",
-        startNumber: 1,
-        rooms: 4,
-        statuses: ["Available", "Available", "Available", "Available"]
-      },
-      {
-        property: propertyMap.villaSolene,
-        prefix: "SOLENE",
-        startNumber: 1,
-        rooms: 5,
-        statuses: ["Available", "Occupied", "Available", "Dirty", "Available"]
-      },
-      {
-        property: propertyMap.villaMirador,
-        prefix: "MIRADOR",
-        startNumber: 1,
-        rooms: 5,
-        statuses: ["Maintenance", "Available", "Dirty", "Available", "Available"]
-      }
-    ];
-
-    const hotelTypes = ["Single", "Double", "Suite"];
-    const villaTypes = ["Suite", "Suite", "Double", "Double", "Single"];
-
-    const roomsData = [];
-
-    roomBlueprints.forEach((blueprint) => {
-      for (let i = 0; i < blueprint.rooms; i++) {
-        const isHotel = blueprint.property.type === "Hotel";
-        const roomNumber = `${blueprint.prefix}-${blueprint.startNumber + i}`;
-        const status = blueprint.statuses[i];
-        const type = isHotel
-          ? hotelTypes[i % hotelTypes.length]
-          : villaTypes[i % villaTypes.length];
-
-        const pricePerNight = isHotel ? 260 + i * 40 : 950 + i * 180;
-
-        roomsData.push({
-          roomNumber,
-          type,
-          pricePerNight,
-          status,
-          description: isHotel
-            ? `${type} with premium hospitality setup and operational turnover standards.`
-            : `${type} configured within the estate for high-touch private stay operations.`,
-          property: blueprint.property._id
-        });
-      }
-    });
-
-    const rooms = await Room.insertMany(roomsData);
-    console.log(`${rooms.length} rooms seeded`);
+    await Room.collection.drop().catch(() => {});
+    await Room.syncIndexes();
 
     const salt = bcrypt.genSaltSync(10);
     const tempAdminPassword = "RevaAdmin2026!";
+
     await User.insertMany([
       {
         email: "alejandro.perez@reva.com",
         password: bcrypt.hashSync(tempAdminPassword, salt),
         name: "Alejandro Perez",
-        role: "admin",
+        role: "admin"
       },
       {
         email: "luana.aguilo@reva.com",
         password: bcrypt.hashSync(tempAdminPassword, salt),
         name: "Luana Aguilo",
-        role: "admin",
+        role: "admin"
       },
       {
         email: "ops@reva.com",
         password: bcrypt.hashSync("Ops12345", salt),
         name: "Operations",
-        role: "staff",
+        role: "staff"
       },
       {
         email: "staff@reva.com",
         password: bcrypt.hashSync("Staff123", salt),
         name: "Staff",
-        role: "staff",
+        role: "staff"
       }
     ]);
+
     console.log("Users seeded");
 
-    const guestSeed = [
-      ["Lucas", "Meyer"],
-      ["Sofia", "Rossi"],
-      ["Nina", "Hartmann"],
-      ["James", "Cole"],
-      ["Lina", "Dupont"],
-      ["Marcus", "Vale"],
-      ["Emma", "Fischer"],
-      ["Leo", "Moreau"],
-      ["Chiara", "Bennett"],
-      ["Daniel", "Keller"],
-      ["Mila", "Santos"],
-      ["Oliver", "Reed"]
-    ];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    const guests = await Guest.insertMany(
-      guestSeed.map((guest, index) => ({
-        firstName: guest[0],
-        lastName: guest[1],
-        email: `${guest[0].toLowerCase()}.${guest[1].toLowerCase()}@example.com`,
-        phone: `600000${(index + 10).toString().padStart(3, "0")}`,
-        document: `DOC${2000 + index}`,
-        nationality: ["Germany", "France", "Italy", "Spain"][index % 4],
-        notes: index % 3 === 0 ? "VIP arrival" : "",
-        birthDate: new Date(1988 + (index % 8), index % 12, 1 + (index % 27))
-      }))
-    );
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
 
-    const occupiedOrDirtyRooms = rooms.filter(
-      (room) => room.status === "Occupied" || room.status === "Dirty"
-    );
+    const twoDaysAgo = new Date(today);
+    twoDaysAgo.setDate(today.getDate() - 2);
 
-    const bookingData = occupiedOrDirtyRooms.slice(0, 14).map((room, index) => ({
-      property: room.property,
-      room: room._id,
-      guest: guests[index % guests.length]._id,
-      checkIn: new Date(`2026-04-${String(3 + index).padStart(2, "0")}`),
-      checkOut: new Date(`2026-04-${String(6 + index).padStart(2, "0")}`),
-      numberOfGuests: index % 2 === 0 ? 2 : 1,
-      totalPrice: room.pricePerNight * 3,
-      status: index < 6 ? "Checked-in" : "Confirmed"
-    }));
+    const in3Days = new Date(today);
+    in3Days.setDate(today.getDate() + 3);
 
-    await Booking.insertMany(bookingData);
-    console.log(`${bookingData.length} bookings seeded`);
+    let guestCounter = 1;
+    let totalRoomsSeeded = 0;
+    let totalBookingsSeeded = 0;
+
+    for (const config of PROPERTY_CONFIGS) {
+      const { name, propertyType, description, location, image, inventory } = config;
+
+      const property = await Property.create({
+        name,
+        propertyType,
+        description,
+        location,
+        image
+      });
+
+      const roomDocs = buildRoomDocs(property._id, inventory);
+      const totalRooms = roomDocs.length;
+
+      const ongoingCount = Math.max(1, Math.floor(totalRooms * 0.35));
+      const departingCount = Math.max(1, Math.floor(totalRooms * 0.07));
+      const checkedOutCount = Math.max(1, Math.floor(totalRooms * 0.07));
+      const arrivingCount = Math.max(1, Math.floor(totalRooms * 0.07));
+
+      for (let i = 0; i < roomDocs.length; i++) {
+        if (i < ongoingCount + departingCount) {
+          roomDocs[i].status = "Occupied";
+          roomDocs[i].isClean = false;
+        } else if (i < ongoingCount + departingCount + checkedOutCount) {
+          roomDocs[i].status = "Dirty";
+          roomDocs[i].isClean = false;
+        } else {
+          roomDocs[i].status = "Available";
+          roomDocs[i].isClean = true;
+        }
+      }
+
+      const rooms = await Room.insertMany(roomDocs);
+      totalRoomsSeeded += rooms.length;
+
+      const guestDocs = [];
+      const bookingMeta = [];
+
+      for (let i = 0; i < ongoingCount; i++) {
+        bookingMeta.push({
+          roomIdx: i,
+          checkIn: yesterday,
+          checkOut: in3Days,
+          status: "Checked-in"
+        });
+      }
+
+      for (let i = ongoingCount; i < ongoingCount + departingCount; i++) {
+        bookingMeta.push({
+          roomIdx: i,
+          checkIn: twoDaysAgo,
+          checkOut: today,
+          status: "Checked-in"
+        });
+      }
+
+      for (let i = ongoingCount + departingCount; i < ongoingCount + departingCount + checkedOutCount; i++) {
+        bookingMeta.push({
+          roomIdx: i,
+          checkIn: twoDaysAgo,
+          checkOut: today,
+          status: "Checked-out"
+        });
+      }
+
+      const arriveStart = ongoingCount + departingCount + checkedOutCount;
+
+      for (let i = arriveStart; i < Math.min(arriveStart + arrivingCount, rooms.length); i++) {
+        bookingMeta.push({
+          roomIdx: i,
+          checkIn: today,
+          checkOut: in3Days,
+          status: "Confirmed"
+        });
+      }
+
+      for (let i = 0; i < bookingMeta.length; i++) {
+        guestDocs.push({
+          firstName: `Guest${guestCounter}`,
+          lastName: "Test",
+          email: `guest${guestCounter}@example.com`,
+          phone: `600${String(guestCounter).padStart(6, "0")}`,
+          document: `DOC${String(guestCounter).padStart(6, "0")}`,
+          nationality: "Testland",
+          birthDate: new Date(1988, guestCounter % 12, (guestCounter % 28) + 1)
+        });
+        guestCounter++;
+      }
+
+      const guests = await Guest.insertMany(guestDocs);
+
+      const bookingDocs = bookingMeta.map((meta, idx) => ({
+        room: rooms[meta.roomIdx]._id,
+        guest: guests[idx]._id,
+        checkIn: meta.checkIn,
+        checkOut: meta.checkOut,
+        numberOfGuests: 1,
+        totalPrice:
+          rooms[meta.roomIdx].pricePerNight *
+          Math.max(1, Math.round((meta.checkOut - meta.checkIn) / 86400000)),
+        status: meta.status
+      }));
+
+      await Booking.insertMany(bookingDocs);
+      totalBookingsSeeded += bookingDocs.length;
+
+      console.log(
+        `${name} (${propertyType}): ${rooms.length} rooms | ${ongoingCount} ongoing, ${departingCount} departing today, ${checkedOutCount} checked-out today, ${arrivingCount} arriving today`
+      );
+    }
+
+    console.log(`\nTotal rooms seeded:    ${totalRoomsSeeded}`);
+    console.log(`Total bookings seeded: ${totalBookingsSeeded}`);
+    console.log(`Total guests seeded:   ${guestCounter - 1}`);
 
     await mongoose.disconnect();
     console.log("Seeding complete. DB connection closed.");
@@ -310,4 +311,4 @@ async function seed() {
   }
 }
 
-seed();
+seed()
