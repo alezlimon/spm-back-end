@@ -1,16 +1,14 @@
-// scripts/seed.js
 require("dotenv").config();
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
-const Property = require("../models/Property.model");
 const Room = require("../models/Room.model");
 const User = require("../models/User.model");
 const Booking = require("../models/Booking.model");
 const Guest = require("../models/Guest.model");
+const Property = require("../models/Property.model");
 
 const MONGO_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/spm";
 
-// Price per room type
 const PRICES = {
   Single: 80,
   Double: 120,
@@ -21,7 +19,6 @@ const PRICES = {
   Dorm: 35
 };
 
-// 7 properties with exact room inventory from the epic
 const PROPERTY_CONFIGS = [
   {
     name: "Alpine House",
@@ -111,7 +108,6 @@ const PROPERTY_CONFIGS = [
   }
 ];
 
-// Generate room documents for a property (sequential numbering from 101)
 function buildRoomDocs(propertyId, inventory) {
   const docs = [];
   let num = 101;
@@ -136,7 +132,6 @@ async function seed() {
     await mongoose.connect(MONGO_URI);
     console.log("Connected to MongoDB");
 
-    // --- Clean previous data ---
     await Booking.deleteMany();
     await Guest.deleteMany();
     await User.deleteMany();
@@ -144,7 +139,6 @@ async function seed() {
     await Room.collection.drop().catch(() => {});
     await Room.syncIndexes();
 
-    // --- Users ---
     const salt = bcrypt.genSaltSync(10);
     const tempAdminPassword = "RevaAdmin2026!";
 
@@ -177,7 +171,6 @@ async function seed() {
 
     console.log("Users seeded");
 
-    // --- Date helpers ---
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -187,9 +180,6 @@ async function seed() {
     const twoDaysAgo = new Date(today);
     twoDaysAgo.setDate(today.getDate() - 2);
 
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-
     const in3Days = new Date(today);
     in3Days.setDate(today.getDate() + 3);
 
@@ -197,7 +187,6 @@ async function seed() {
     let totalRoomsSeeded = 0;
     let totalBookingsSeeded = 0;
 
-    // --- Properties, rooms and bookings ---
     for (const config of PROPERTY_CONFIGS) {
       const { name, propertyType, description, location, image, inventory } = config;
 
@@ -264,6 +253,7 @@ async function seed() {
       }
 
       const arriveStart = ongoingCount + departingCount + checkedOutCount;
+
       for (let i = arriveStart; i < Math.min(arriveStart + arrivingCount, rooms.length); i++) {
         bookingMeta.push({
           roomIdx: i,
