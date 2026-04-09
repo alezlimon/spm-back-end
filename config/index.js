@@ -6,7 +6,8 @@ const cors = require("cors");
 const FRONTEND_URL = process.env.ORIGIN || [
   "http://localhost:3000",
   "http://localhost:5177",
-  "https://spm-front-end-git-main-alezlimons-projects.vercel.app"
+  "https://spm-front-end-git-main-alezlimons-projects.vercel.app",
+  "https://spm-front-end-git-alejandro-alezlimons-projects.vercel.app"
 ];
 
 module.exports = (app) => {
